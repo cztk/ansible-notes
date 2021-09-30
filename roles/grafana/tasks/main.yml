@@ -1,0 +1,49 @@
+- name: install gpg
+  ansible.builtin.apt:
+
+    name: gnupg,software-properties-common
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: add gpg hey
+  ansible.builtin.apt_key:
+    url: "https://packages.grafana.com/gpg.key"
+    validate_certs: yes
+
+- name: add repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://packages.grafana.com/oss/deb stable main"
+    state: present
+    validate_certs: yes
+
+- name: install grafana
+  ansible.builtin.apt:
+    name: grafana
+    state: latest
+    update_cache: yes
+
+- name: start service grafana-server
+  ansible.builtin.systemd:
+    name: grafana-server
+    daemon_reload: yes
+    state: started
+    enabled: yes
+
+- name: wait for service up
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:3000"
+    status_code: 200
+  register: __result
+  until: __result.status == 200
+  retries: 120
+  delay: 1
+
+- name: load admin password from vault
+  include_vars:
+    file: secret.yml
+
+- name: change admin password for grafana gui
+  ansible.builtin.shell : "grafana-cli admin reset-admin-password {{ grafana_admin_password }}"
+  register: __command_admin
+  changed_when: __command_admin.rc !=0

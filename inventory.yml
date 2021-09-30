@@ -1,0 +1,13 @@
+all:
+  children:
+    grafana:
+      hosts:
+        192.0.2.2
+    prometheus:
+      hosts:
+        192.0.2.2
+    node_exporter:
+      hosts:
+        192.0.2.3
+        192.0.2.4
+        192.0.2.5
